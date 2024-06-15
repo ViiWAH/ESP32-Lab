@@ -93,7 +93,6 @@ void setupMQTT() {
 }
 
 //// HTTP Server Related Stuff
-#include <NetworkClient.h>
 #include <WebServer.h>
 WebServer HTTP(80);
 
