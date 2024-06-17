@@ -4,7 +4,7 @@ built to function in a esp32 dev board
 in boards select *esp32* by Espressif
 in library select *PubSubClient* by Nick
 in library select *Preferences* by Espressif
-in library select *SSD1306* 
+in library select *SSD1306* by Adafruit
 
 **/
 
@@ -191,11 +191,11 @@ void setup() {
   // Open Preferences with my-app namespace.
   preferences.begin("app", false);
 
+  setupDisplay();
   setupWiFi();
   setupmDNS();
   setupMQTT();
   setupHTTP();
-  setupDisplay();
 }
 
 void loop() {
@@ -209,8 +209,8 @@ void loop() {
   snprintf(temp, 1024,
            "Uptime: %02d:%02d:%02d\nWifi: %02d\nMQTT: %02d\n",
            hr, min, sec, WiFi.status(), MQTT.connected());
-apSSID
-apPassword
+// apSSID
+// apPassword
 
 
   printDisplay( temp );
