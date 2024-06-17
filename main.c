@@ -186,6 +186,12 @@ void setupHTTP() {
 
 //// the ESP32 stuff
 void setup() {
+
+  pinMode(16, OUTPUT);
+  pinMode(17, OUTPUT);
+  pinMode(18, OUTPUT);
+
+
   Serial.begin(115200);
 
   // Open Preferences with my-app namespace.
@@ -196,6 +202,9 @@ void setup() {
   setupmDNS();
   setupMQTT();
   setupHTTP();
+
+
+
 }
 
 void loop() {
