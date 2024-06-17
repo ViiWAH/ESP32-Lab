@@ -26,7 +26,7 @@ Preferences preferences;
 #include <WiFi.h>
 WiFiClient espClient;
 
-void setupWiFi(bool APmode) {
+void setupWiFi() {
   // Get wifi ssid and password from preferences
   String ssid = preferences.getString("wifi_ssid", "");             // If no ssid stored, return empty string
   String password = preferences.getString("wifi_password", "");  // If no password stored, return empty string
@@ -35,7 +35,6 @@ void setupWiFi(bool APmode) {
 
 
   if (ssid.equals("") || password.equals("")) {
-    if (!APmode) return;
     // No SSID or password, create an access point
     char apSSID[20];
     char apPassword[20];
@@ -80,16 +79,16 @@ void setupMQTT() {
 
   //// Connect to MQTT Server
   MQTT.setServer(mqtt_Server.c_str(), mqtt_Port);
-  while (!MQTT.connected()) {
-    Serial.println("Connecting to MQTT...");
-    if (MQTT.connect("ESP32Client")) {
-      Serial.println("Connected to MQTT");
-    } else {
-      Serial.print("failed with state ");
-      Serial.print(MQTT.state());
-      delay(2000);
-    }
-  }
+  // while (!MQTT.connected()) {
+  //   Serial.println("Connecting to MQTT...");
+  //   if (MQTT.connect("ESP32Client")) {
+  //     Serial.println("Connected to MQTT");
+  //   } else {
+  //     Serial.print("failed with state ");
+  //     Serial.print(MQTT.state());
+  //     delay(2000);
+  //   }
+  // }
 }
 
 //// HTTP Server Related Stuff
@@ -163,7 +162,7 @@ void setup() {
   // Open Preferences with my-app namespace.
   preferences.begin("app", false);
 
-  setupWiFi(true);
+  setupWiFi();
   setupmDNS();
   setupMQTT();
   setupHTTP();
@@ -173,5 +172,9 @@ void loop() {
   MQTT.loop();
   HTTP.handleClient();
 
+  //TODO: MQTT.connected()
+  //TODO: WiFi.status() TIMEOUT // not connected for 60+sec
+  //TODO: Display Update with data TODO above
+  
   delay(2);  //allow the cpu to switch to other tasks
 }
