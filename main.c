@@ -3,8 +3,40 @@ built to function in a esp32 dev board
 
 in boards select *esp32* by Espressif
 in library select *PubSubClient* by Nick
+in library select *Preferences* by Espressif
+in library select *SSD1306* 
 
 **/
+
+char temp[1024]; // Temp buffer for HTTP requests and Display
+char apSSID[20];
+char apPassword[20];
+
+//// SSD1306 
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 32
+#define OLED_RESET -1
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+
+void setupDisplay() {
+  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
+  display.display();
+  delay(2000);
+  display.clearDisplay();
+}
+
+void printDisplay(char* text) {
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(WHITE);
+  display.setCursor(0,0);
+  display.println(text);
+  display.display();
+}
 
 
 //Generic ESP32 board Related Stuff
@@ -36,22 +68,20 @@ void setupWiFi() {
 
   if (ssid.equals("") || password.equals("")) {
     // No SSID or password, create an access point
-    char apSSID[20];
-    char apPassword[20];
     sprintf(apSSID, "ESP32_AP%s", generateRandomChars(8).c_str());
     sprintf(apPassword, "%s", generateRandomChars(8).c_str());
     WiFi.softAP(apSSID, apPassword);
-    Serial.println("Access point created");
+    // Serial.println("Access point created");
   } else {
     // Connect to WiFi
     WiFi.begin(ssid.c_str(), password.c_str());
-    Serial.println("Connecting to WiFi...");
-    int tries = 0;
-    while (WiFi.status() != WL_CONNECTED && tries < 10) {
-      delay(500);
-      tries += 1;
-    }
-    Serial.println("Connected to WiFi");
+    // Serial.println("Connecting to WiFi...");
+    // int tries = 0;
+    // while (WiFi.status() != WL_CONNECTED && tries < 10) {
+    //   delay(500);
+    //   tries += 1;
+    // }
+    // Serial.println("Connected to WiFi");
   }
 }
 
@@ -96,13 +126,12 @@ void setupMQTT() {
 WebServer HTTP(80);
 
 void HTTP_handleRoot() {
-  char temp[400];
   int sec = millis() / 1000;
   int hr = sec / 3600;
   int min = (sec / 60) % 60;
   sec = sec % 60;
 
-  snprintf(temp, 400,
+  snprintf(temp, 800,
            "<html><head><meta http-equiv='refresh' content='5'/><title>ESP32 Demo</title></head><body><p>Uptime: %02d:%02d:%02d</p><form method='POST' action='/savecfg'>WiFi SSID:<input type='text' name='ssid'><br>WiFi Password:<input type='text' name='password'><br>MQTT Server:<input type='text' name='mqttServer'><br>MQTT Port:<input type='text' name='mqttPort'><br><input type='submit' value='Save'></form><img src=\"/test.svg\" /></body></html>",
            hr, min, sec);
 
@@ -166,6 +195,7 @@ void setup() {
   setupmDNS();
   setupMQTT();
   setupHTTP();
+  setupDisplay();
 }
 
 void loop() {
@@ -175,6 +205,15 @@ void loop() {
   //TODO: MQTT.connected()
   //TODO: WiFi.status() TIMEOUT // not connected for 60+sec
   //TODO: Display Update with data TODO above
+
+  snprintf(temp, 1024,
+           "Uptime: %02d:%02d:%02d\nWifi: %02d\nMQTT: %02d\n",
+           hr, min, sec, WiFi.status(), MQTT.connected());
+apSSID
+apPassword
+
+
+  printDisplay( temp );
   
   delay(2);  //allow the cpu to switch to other tasks
 }
