@@ -102,6 +102,28 @@ void setupmDNS() {
 //// MQTT Client Related Stuff
 #include <PubSubClient.h>
 PubSubClient MQTT(espClient);
+
+void callback(char* topic, byte* payload, unsigned int length) {
+  // Handle the incoming MQTT message here
+  // You can access the topic and payload of the message
+  // and perform the necessary actions based on your requirements
+  // Convert the payload to a string
+  String payloadStr = "";
+  for (int i = 0; i < length; i++) {
+    payloadStr += (char)payload[i];
+  }
+  
+  // Print the topic and payload
+  Serial.print("Received message on topic: ");
+  Serial.println(topic);
+  Serial.print("Payload: ");
+  Serial.println(payloadStr);
+  
+  // Add your code here to handle the incoming MQTT message
+  // For example, you can perform actions based on the topic or payload
+  // or update variables to be used in the main loop
+}
+
 void setupMQTT() {
   // Get MQTT server and port from preferences
   String mqtt_Server = preferences.getString("mqtt_Server", "");  // If no server stored, return empty string
@@ -119,26 +141,6 @@ void setupMQTT() {
   //     delay(2000);
   //   }
   // }
-  void callback(char* topic, byte* payload, unsigned int length) {
-    // Handle the incoming MQTT message here
-    // You can access the topic and payload of the message
-    // and perform the necessary actions based on your requirements
-    // Convert the payload to a string
-    String payloadStr = "";
-    for (int i = 0; i < length; i++) {
-      payloadStr += (char)payload[i];
-    }
-    
-    // Print the topic and payload
-    Serial.print("Received message on topic: ");
-    Serial.println(topic);
-    Serial.print("Payload: ");
-    Serial.println(payloadStr);
-    
-    // Add your code here to handle the incoming MQTT message
-    // For example, you can perform actions based on the topic or payload
-    // or update variables to be used in the main loop
-  }
   MQTT.setCallback(callback);
   MQTT.subscribe("topic");
 }
@@ -246,6 +248,10 @@ void loop() {
            hr, min, sec, WiFi.status(), MQTT.connected());
 // apSSID
 // apPassword
+
+  digitalWrite(16, LOW); // GPIO16
+  delay(2);  //allow the cpu to switch to other tasks
+  digitalWrite(16, HIGH); // GPIO16
 
 
   printDisplay( temp );
