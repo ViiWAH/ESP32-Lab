@@ -119,6 +119,28 @@ void setupMQTT() {
   //     delay(2000);
   //   }
   // }
+  void callback(char* topic, byte* payload, unsigned int length) {
+    // Handle the incoming MQTT message here
+    // You can access the topic and payload of the message
+    // and perform the necessary actions based on your requirements
+    // Convert the payload to a string
+    String payloadStr = "";
+    for (int i = 0; i < length; i++) {
+      payloadStr += (char)payload[i];
+    }
+    
+    // Print the topic and payload
+    Serial.print("Received message on topic: ");
+    Serial.println(topic);
+    Serial.print("Payload: ");
+    Serial.println(payloadStr);
+    
+    // Add your code here to handle the incoming MQTT message
+    // For example, you can perform actions based on the topic or payload
+    // or update variables to be used in the main loop
+  }
+  MQTT.setCallback(callback);
+  MQTT.subscribe("topic");
 }
 
 //// HTTP Server Related Stuff
@@ -215,6 +237,10 @@ void loop() {
   //TODO: WiFi.status() TIMEOUT // not connected for 60+sec
   //TODO: Display Update with data TODO above
 
+  int sec = millis() / 1000;
+  int hr = sec / 3600;
+  int min = (sec / 60) % 60;
+  sec = sec % 60;
   snprintf(temp, 1024,
            "Uptime: %02d:%02d:%02d\nWifi: %02d\nMQTT: %02d\n",
            hr, min, sec, WiFi.status(), MQTT.connected());
