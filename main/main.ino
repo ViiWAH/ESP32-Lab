@@ -65,6 +65,10 @@ void setupWiFi() {
   // String ssid = preferences.getString("wifi_ssid", "Local_neT");             // If no ssid stored, return empty string
   // String password = preferences.getString("wifi_password", "C@net@deOuro");  // If no password stored, return empty string
 
+  if (WiFi.status() != WL_DISCONNECTED) {
+    WiFi.disconnect(true); // Disconnect from any previous WiFi network
+    WiFi.softAPdisconnect(true); // Turn off the access point
+  }
 
   if (ssid.equals("") || password.equals("")) {
     // No SSID or password, create an access point
@@ -75,14 +79,19 @@ void setupWiFi() {
   } else {
     // Connect to WiFi
     WiFi.begin(ssid.c_str(), password.c_str());
-    // Serial.println("Connecting to WiFi...");
-    // int tries = 0;
-    // while (WiFi.status() != WL_CONNECTED && tries < 10) {
-    //   delay(500);
-    //   tries += 1;
-    // }
-    // Serial.println("Connected to WiFi");
   }
+}
+
+int WiFi_tries = 0;
+void loopWIFI(){
+    // Serial.println("Connecting to WiFi...");
+    int tries = 0;
+    if (WiFi.status() != WL_CONNECTED && WiFi_tries < 10){
+      WiFi_tries += 1;
+    } else {
+
+    }
+    // Serial.println("Connected to WiFi");
 }
 
 //// mDNS Module Related Stuff
@@ -119,6 +128,13 @@ void callbackMQTT(char* topic, byte* payload, unsigned int length) {
   Serial.print("Payload: ");
   Serial.println(payloadStr);
   
+  if (strcmp(topic, "tomada12") == 0) {
+    Serial.println(topic);
+    Serial.print("Payload: ");
+    Serial.println(payloadStr);
+    // Add your code here to handle the incoming MQTT message for topic "tomada12"
+  }
+
   // Add your code here to handle the incoming MQTT message
   // For example, you can perform actions based on the topic or payload
   // or update variables to be used in the main loop
@@ -179,7 +195,7 @@ void HTTP_handleNotFound() {
   HTTP.send(404, "text/plain", message);
   // digitalWrite(led, 0);
 }
-void HTTP_saveCfg() {
+void HTTP_savecfg() {
   String message = "File Not Found\n\n";
   message += "URI: ";
   message += HTTP.uri();
@@ -199,7 +215,7 @@ void HTTP_saveCfg() {
 
 void setupHTTP() {
   HTTP.on("/", HTTP_handleRoot);
-  HTTP.on("/saveCfg", HTTP_saveCfg);
+  HTTP.on("/savecfg", HTTP_savecfg);
   HTTP.on("/inline", []() {
     HTTP.send(200, "text/plain", "this works as well");
   });
@@ -211,9 +227,9 @@ void setupHTTP() {
 //// the ESP32 stuff
 void setup() {
 
-  pinMode(16, OUTPUT);
-  pinMode(17, OUTPUT);
-  pinMode(18, OUTPUT);
+  pinMode(12, OUTPUT);
+  pinMode(13, OUTPUT);
+  pinMode(14, OUTPUT);
 
 
   Serial.begin(115200);
@@ -229,6 +245,9 @@ void setup() {
 }
 
 void loop() {
+  ; // loopdisplay();
+  loopWIFI();
+  ; // loopDNS();
   MQTT.loop();
   HTTP.handleClient();
 
