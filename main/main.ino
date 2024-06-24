@@ -8,9 +8,6 @@ in library select *SSD1306* by Adafruit
 
 **/
 
-char temp[1024]; // Temp buffer for HTTP requests and Display
-char apSSID[20];
-char apPassword[20];
 
 //// SSD1306 
 #include <Wire.h>
@@ -24,12 +21,10 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 void setupDisplay() {
   display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
-  display.display();
-  delay(2000);
-  display.clearDisplay();
+  printDisplay("Display INIT")
 }
 
-void printDisplay(char* text) {
+void printDisplay(String text) {
   display.clearDisplay();
   display.setTextSize(1);
   display.setTextColor(WHITE);
@@ -50,11 +45,16 @@ String generateRandomChars(int length) {
 }
 
 
+
 // Load Save Variables
 #include <Preferences.h>
 Preferences preferences;
 
+
+
 //// WIFI Module Related Stuff
+char apSSID[20];
+char apPassword[20];
 #include <WiFi.h>
 WiFiClient espClient;
 
@@ -70,15 +70,18 @@ void setupWiFi() {
     WiFi.softAPdisconnect(true); // Turn off the access point
   // }
 
-  if (ssid.equals("") || password.equals("")) {
-    // No SSID or password, create an access point
+  if (ssid.equals("") || password.equals("")) {    // No SSID or password, create an access point
     sprintf(apSSID, "ESP32_AP%s", generateRandomChars(8).c_str());
     sprintf(apPassword, "%s", generateRandomChars(8).c_str());
     WiFi.softAP(apSSID, apPassword);
-    // Serial.println("Access point created");
+    Serial.println("Access point created");
+    printDisplay("Access point created"
+      + "\nWiFi SSID: " + String(apSSID)
+      + "\nWiFi Password: " + String(apPassword)
+      + "\nIP Address: " + WiFi.localIP().toString()
+    );
   } else {
-    // Connect to WiFi
-    WiFi.begin(ssid.c_str(), password.c_str());
+    WiFi.begin(ssid.c_str(), password.c_str());    // Connect to WiFi
   }
 }
 
@@ -89,10 +92,13 @@ void loopWIFI(){
     if (WiFi.status() != WL_CONNECTED && WiFi_tries < 10){
       WiFi_tries += 1;
     } else {
-
+      preferences.putString("wifi_ssid", "");
+      preferences.putString("wifi_password", "");
+      setupWiFi();
     }
     // Serial.println("Connected to WiFi");
 }
+
 
 //// mDNS Module Related Stuff
 #include <ESPmDNS.h>
@@ -106,6 +112,7 @@ void setupmDNS() {
     MDNS.addService("http", "tcp", 80);
   }
 }
+
 
 
 //// MQTT Client Related Stuff
@@ -139,6 +146,8 @@ void callbackMQTT(char* topic, byte* payload, unsigned int length) {
   // or update variables to be used in the main loop
 }
 
+
+
 void setupMQTT() {
   // Get MQTT server and port from preferences
   String mqtt_Server = preferences.getString("mqtt_Server", "");  // If no server stored, return empty string
@@ -146,19 +155,34 @@ void setupMQTT() {
 
   //// Connect to MQTT Server
   MQTT.setServer(mqtt_Server.c_str(), mqtt_Port);
-  // while (!MQTT.connected()) {
-  //   Serial.println("Connecting to MQTT...");
-  //   if (MQTT.connect("ESP32Client")) {
-  //     Serial.println("Connected to MQTT");
-  //   } else {
-  //     Serial.print("failed with state ");
-  //     Serial.print(MQTT.state());
-  //     delay(2000);
-  //   }
-  // }
   MQTT.setCallback(callbackMQTT);
   MQTT.subscribe("topic");
 }
+
+int MQTT_tries = 0;
+int MQTT_lastConnected = 0;
+void loopMQTT(){
+  MQTT.loop();
+  int MQTTconnected = MQTT.connected();
+  if (MQTTconnected != MQTT_lastConnected) {
+    Serial.print("[MQTT] State Change: ");
+    Serial.println(MQTTconnected);
+    if (MQTTconnected) {
+      MQTT.publish("tomada12", "ON");
+    }
+    MQTT_lastConnected = MQTTconnected;
+  }
+  if (!MQTTconnected) {
+    if (MQTT.connect("ESP32Client")) {
+      Serial.println("Connected to MQTT");
+    } else {
+      Serial.print("failed with state ");
+      Serial.print(MQTT.state());
+    }
+  }
+}
+
+
 
 //// HTTP Server Related Stuff
 #include <WebServer.h>
@@ -170,12 +194,15 @@ void HTTP_handleRoot() {
   int min = (sec / 60) % 60;
   sec = sec % 60;
 
-  snprintf(temp, 800,
-           "<html><head><meta http-equiv='refresh' content='5'/><title>ESP32 Demo</title></head><body><p>Uptime: %02d:%02d:%02d</p><form method='POST' action='/savecfg'>WiFi SSID:<input type='text' name='ssid'><br>WiFi Password:<input type='text' name='password'><br>MQTT Server:<input type='text' name='mqttServer'><br>MQTT Port:<input type='text' name='mqttPort'><br><input type='submit' value='Save'></form><img src=\"/test.svg\" /></body></html>",
+  String temp = String("");
+
+  snprintf(temp, 1024,
+           "<html><head><meta http-equiv='refresh' content='60'/><title>ESP32 Demo</title></head><body><p>Uptime: %02d:%02d:%02d</p><form method='POST' action='/savecfg'>WiFi SSID:<input type='text' name='ssid'><br>WiFi Password:<input type='text' name='password'><br>MQTT Server:<input type='text' name='mqttServer'><br>MQTT Port:<input type='text' name='mqttPort'><br><input type='submit' value='Save'></form><img src=\"/test.svg\" /></body></html>",
            hr, min, sec);
 
   HTTP.send(200, "text/html", temp);
 }
+
 void HTTP_handleNotFound() {
   // digitalWrite(led, 1);
   String message = "File Not Found\n\n";
@@ -247,7 +274,7 @@ void loop() {
   ; // loopdisplay();
   loopWIFI();
   ; // loopDNS();
-  MQTT.loop();
+  loopMQTT();
   HTTP.handleClient();
 
   //TODO: MQTT.connected()
@@ -261,6 +288,7 @@ void loop() {
   snprintf(temp, 1024,
            "Uptime: %02d:%02d:%02d\nWifi: %02d\nMQTT: %02d\n",
            hr, min, sec, WiFi.status(), MQTT.connected() );
+
 // apSSID
 // apPassword
 
