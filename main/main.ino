@@ -103,7 +103,7 @@ void setupmDNS() {
 #include <PubSubClient.h>
 PubSubClient MQTT(espClient);
 
-void callback(char* topic, byte* payload, unsigned int length) {
+void callbackMQTT(char* topic, byte* payload, unsigned int length) {
   // Handle the incoming MQTT message here
   // You can access the topic and payload of the message
   // and perform the necessary actions based on your requirements
@@ -141,7 +141,7 @@ void setupMQTT() {
   //     delay(2000);
   //   }
   // }
-  MQTT.setCallback(callback);
+  MQTT.setCallback(callbackMQTT);
   MQTT.subscribe("topic");
 }
 
@@ -226,9 +226,6 @@ void setup() {
   setupmDNS();
   setupMQTT();
   setupHTTP();
-
-
-
 }
 
 void loop() {
@@ -245,13 +242,17 @@ void loop() {
   sec = sec % 60;
   snprintf(temp, 1024,
            "Uptime: %02d:%02d:%02d\nWifi: %02d\nMQTT: %02d\n",
-           hr, min, sec, WiFi.status(), MQTT.connected());
+           hr, min, sec, WiFi.status(), MQTT.connected() );
 // apSSID
 // apPassword
 
   digitalWrite(16, LOW); // GPIO16
+  digitalWrite(17, LOW); // GPIO16
+  digitalWrite(18, LOW); // GPIO16
   delay(2);  //allow the cpu to switch to other tasks
   digitalWrite(16, HIGH); // GPIO16
+  digitalWrite(17, HIGH); // GPIO16
+  digitalWrite(18, HIGH); // GPIO16
 
 
   printDisplay( temp );
