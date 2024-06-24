@@ -65,10 +65,10 @@ void setupWiFi() {
   // String ssid = preferences.getString("wifi_ssid", "Local_neT");             // If no ssid stored, return empty string
   // String password = preferences.getString("wifi_password", "C@net@deOuro");  // If no password stored, return empty string
 
-  if (WiFi.status() != WL_DISCONNECTED) {
+  // if (WiFi.status() != WL_DISCONNECTED) {
     WiFi.disconnect(true); // Disconnect from any previous WiFi network
     WiFi.softAPdisconnect(true); // Turn off the access point
-  }
+  // }
 
   if (ssid.equals("") || password.equals("")) {
     // No SSID or password, create an access point
@@ -111,7 +111,6 @@ void setupmDNS() {
 //// MQTT Client Related Stuff
 #include <PubSubClient.h>
 PubSubClient MQTT(espClient);
-
 void callbackMQTT(char* topic, byte* payload, unsigned int length) {
   // Handle the incoming MQTT message here
   // You can access the topic and payload of the message
